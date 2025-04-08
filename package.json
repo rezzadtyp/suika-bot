@@ -9,15 +9,20 @@
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
+    "@types/qrcode": "^1.5.5",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",
+    "@mengkodingan/ckptw": "^4.4.9",
+    "@prisma/client": "^6.5.0",
     "@whiskeysockets/baileys": "^6.17.16",
     "axios": "^1.8.4",
     "dotenv": "^16.4.7",
-    "pino": "^9.6.0"
+    "pino": "^9.6.0",
+    "prisma": "^6.5.0",
+    "qrcode": "^1.5.4"
   }
 }
