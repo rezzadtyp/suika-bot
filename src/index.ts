@@ -6,6 +6,16 @@ import makeWASocket, {
   useMultiFileAuthState,
 } from "@whiskeysockets/baileys";
 import pino from "pino";
+import { formatPhoneNumber } from "./utils/const";
+import { pingCommand } from "./commands/ping";
+import { ownerNumber, prefix } from "./config";
+import { reminderCommand } from "./commands/reminder";
+import { payCommand } from "./commands/pay";
+import { cancelCommand } from "./commands/cancel";
+import { listCommand } from "./commands/list";
+import { menuCommand } from "./commands/menu";
+import { setPriceCommand } from "./commands/setprice";
+import { priceListCommand } from "./commands/pricelist";
 
 const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
@@ -55,7 +65,9 @@ const start = async () => {
         await start();
       }
     } else if (connection === "open") {
-      console.log("[Connected] " + JSON.stringify(sock?.user?.id, null, 2));
+      console.log(
+        "[Connected] " + formatPhoneNumber(sock.user!.id) + " Role: [OWNER]"
+      );
     }
   });
 
@@ -66,24 +78,55 @@ const start = async () => {
     const msg = m.messages[0];
     if (msg.key.fromMe) return;
 
-    const chat = msg.key.remoteJid;
     const sender = msg.key.participant || msg.key.remoteJid;
-    console.log(msg.key.remoteJid);
 
     if (m.type === "notify") {
-      console.log("New message:", msg.message?.conversation);
-      await sock.sendMessage(chat!, {
-        text: `Hello, ${sender!.split("@")[0]}!`,
-      });
+      const messageText = msg.message?.conversation;
+
+      if (messageText?.startsWith(prefix)) {
+        const command = messageText.slice(1).trim().split(" ")[0];
+        const message = messageText.slice(1).trim().split(" ")[1];
+
+        if (command === "ping" && sender) {
+          await pingCommand(sock, sender);
+        } else if (command === "pay" && sender) {
+          if (message) {
+            await payCommand(
+              sock,
+              message.trim(),
+              formatPhoneNumber(sender),
+              m
+            );
+          } else {
+            sock.sendMessage(sender!, {
+              text: `Yang bener lah commandnya bang, ${prefix}pay <imapmu>`,
+            });
+          }
+        } else if (command === "cancel" && sender) {
+          await cancelCommand(sock, formatPhoneNumber(sender), m);
+        } else if (command === "list" && sender) {
+          await listCommand(sock, formatPhoneNumber(sender), m);
+        } else if (command === "menu" && sender) {
+          await menuCommand(sock, formatPhoneNumber(sender), m);
+        } else if (command === "setprice" && sender) {
+          await setPriceCommand(sock, message, formatPhoneNumber(sender), m);
+        } else if (command === "pricelist" && sender) {
+          await priceListCommand(sock, formatPhoneNumber(sender), m);
+        } else {
+          await sock.sendMessage(sender!, {
+            text: `Command tidak ditemukan, gunakan ${prefix}menu untuk melihat daftar command`,
+          });
+        }
+      }
     }
   });
 
   sock.ev.on("connection.update", async (update) => {
     const { connection } = update;
     if (connection === "open") {
-      await sock.sendMessage("6285143247378@s.whatsapp.net", {
-        text: "Hello, World!",
-      });
+      setInterval(async () => {
+        await reminderCommand(sock);
+      }, 3_600_000);
     }
   });
 };

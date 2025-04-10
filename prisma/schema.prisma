@@ -80,3 +80,32 @@ model OtpHouseholdFilter {
 
   @@map("otp_household_filters")
 }
+
+model TransactionHistory {
+  id          String            @id @default(cuid())
+  contact     String
+  imap        String[]
+  totalAmount Int
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  status      TransactionStatus
+  messageKey  String
+
+  @@map("transaction_histories")
+}
+
+model Price {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  amount    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("prices")
+}
+
+enum TransactionStatus {
+  SUCCESS
+  FAILED
+  PENDING
+}
